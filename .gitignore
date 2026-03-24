@@ -1,0 +1,9 @@
+# Python Sanal Ortamı (Git'in çökmesine sebep olan yer)
+teknofest_env/
+
+# Jupyter ve Python önbellek dosyaları
+__pycache__/
+.ipynb_checkpoints/
+
+# Büyük veri setlerini (ham veriyi) GitHub'a yüklememek için
+data/raw/

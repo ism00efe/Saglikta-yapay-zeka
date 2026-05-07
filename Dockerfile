@@ -4,17 +4,21 @@ FROM python:3.11-slim
 # Çalışma dizinini ayarla
 WORKDIR /app
 
-# Gerekli dosyaları kopyala
-COPY requirements.txt .
+# Sistem bağımlılıklarını kur (Gerekirse)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Kütüphaneleri kur
+# Önce sadece requirements kopyalayıp kütüphaneleri kuralım (Hız kazandırır)
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Tüm kodları ve modelleri kopyala
+# Tüm kodları, modelleri ve klasör yapısını kopyala
 COPY . .
 
-# Portları dışarı aç (8000 API için, 8501 Arayüz için)
-EXPOSE 8000 8501
+# Hugging Face Spaces varsayılan olarak 7860 portunu bekler.
+# 8000 API için, 7860 Arayüz (UI) için açılacak.
+EXPOSE 7860 8000
 
-# ÖNEMLİ: Hem FastAPI'yi (Arka plan) hem de Streamlit'i (Ön plan) aynı anda başlat
-CMD uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamlit run src/app/app.py --server.port 8501 --server.address 0.0.0.0
+# Hem FastAPI'yi (8000'de) hem de Streamlit'i (7860'da) aynı anda başlat
+CMD uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamlit run src/app/app.py --server.port 7860 --server.address 0.0.0.0

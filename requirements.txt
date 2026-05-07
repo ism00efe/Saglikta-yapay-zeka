@@ -11,3 +11,6 @@ requests
 matplotlib
 seaborn
 pydantic
+xgboost
+optuna
+python-dotenv

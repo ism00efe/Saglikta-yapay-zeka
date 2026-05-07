@@ -19,7 +19,7 @@ prep = MutationPreprocessor()
 
 # 2. Başlık ve Alt Başlık
 st.title("🧬 Genetik Varyant Analiz Sistemi")
-st.markdown("**Marmara Üniversitesi & Teknofest Projesi** | *BARDDNA (ESM2) + Hibrit Random Forest*")
+st.markdown("*BARDDNA (ESM2) + Hibrit XGBoost (Optuna Optimized)*")
 st.divider()
 
 # 3. Sol Menü (Sidebar)
@@ -85,7 +85,7 @@ if st.button("🚀 Mutasyonu Analiz Et", use_container_width=True, type="primary
 
         # FastAPI Sunucusuna İstek Atma
         try:
-            response = requests.post("https://saglikta-yapay-zeka.onrender.com/predict", json=payload)
+            response = requests.post("http://127.0.0.1:8000/predict", json=payload)
             result = response.json()
             
             st.divider()

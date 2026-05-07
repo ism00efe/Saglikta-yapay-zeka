@@ -38,31 +38,28 @@ def extract_features(df):
     # tqdm ile progress bar (ilerleme çubuğu) ekliyoruz
     for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="İşleniyor"):
         
-        # --- DÜZELTİLEN KISIM BAŞLANGICI ---
-        # Gerçek sütun isimlerini veri setinden çekiyoruz
-        aa_ref = str(row.get('aa_ref_1', 'A')) 
-        aa_alt = str(row.get('aa_alt_1', 'A'))
-        
-        # Tam protein dizisi olmadığı için, ESM2 modeline mutasyonun 
-        # adını (örn: p.Ala123Val veya gen adı) vererek satırları ayırt etmesini sağlıyoruz.
-        sequence = str(row.get('ProteinChange_clean', row.get('Name', ''))) 
+            # --- DÜZELTİLEN KISIM BAŞLANGICI ---
+        aa_ref = str(row.get('aa_ref_1', 'A')).strip().upper()
+        aa_alt = str(row.get('aa_alt_1', 'A')).strip().upper()
+        gene_symbol = str(row.get('Symbol', row.get('gene_symbol', ''))).strip().upper() # Verisetindeki gen sütununa göre uyarla
+
+        # API ile BİREBİR aynı metin formatı
+        sequence = f"{gene_symbol} {aa_ref} {aa_alt}".strip()
         # --- DÜZELTİLEN KISIM BİTİŞİ ---
-        
-        # --- ADIM A: FİZİKSEL ÖZELLİKLER (21 Adet) ---
-        bio_features = preprocessor.calculate_features(aa_ref, aa_alt)
-        
-        # --- ADIM B: ESM2 DİL MODELİ VEKTÖRLERİ (320 Adet) ---
-        # Metni modele uygun tokenlara çevir
+
+        # ... (Fiziksel özellikler kısmı aynı kalacak) ...
+
+        # --- ESM2 DİL MODELİ VEKTÖRLERİ ---
         inputs = tokenizer(sequence, return_tensors="pt", padding=True, truncation=True, max_length=1024)
-        inputs = {k: v.to(DEVICE) for k, v in inputs.items()} # Veriyi Ekran Kartına yolla
-        
-        with torch.no_grad(): # Gradyan hesaplama (Ram/VRAM tasarrufu)
+        inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
+
+        with torch.no_grad():
             outputs = esm_model(**inputs)
-            # Sadece dizinin genel anlamını ifade eden '[CLS]' tokenını alıyoruz (0. index)
+            # Eğitim ve canlıda AYNI pooling yöntemi: [CLS] token (0. index)
             esm_embedding = outputs.last_hidden_state[0, 0, :].cpu().numpy()
             
-        # --- ADIM C: HİBRİT BİRLEŞTİRME ---
-        # 21 özellik ile 320 özelliği yan yana yapıştır (Toplam 341)
+        # --- HİBRİT BİRLEŞTİRME ---
+        # DİKKAT: Önce biyokimyasal (21), sonra ESM (320)
         combined_vector = np.concatenate((bio_features, esm_embedding))
         all_features.append(combined_vector)
         
